@@ -1,10 +1,11 @@
 ARG GO_VERSION=1.22.1
 ARG RUST_VERSION=1.76
 ARG ONNXRUNTIME_VERSION=1.17.1
+ARG BUILDPLATFORM=linux/amd64
 
 #--- rust build of tokenizer ---
 
-FROM rust:$RUST_VERSION AS tokenizer
+FROM --platform=$BUILDPLATFORM rust:$RUST_VERSION AS tokenizer
 
 RUN git clone https://github.com/knights-analytics/tokenizers -b main && \
     cd tokenizers && \
@@ -12,7 +13,7 @@ RUN git clone https://github.com/knights-analytics/tokenizers -b main && \
 
 #--- build and test layer ---
 
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS building
+FROM --platform=$BUILDPLATFORM public.ecr.aws/amazonlinux/amazonlinux:2023 AS building
 ARG GO_VERSION
 ARG ONNXRUNTIME_VERSION
 
@@ -56,7 +57,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 #--- artifacts layer
 
-FROM scratch AS artifacts
+FROM --platform=$BUILDPLATFORM scratch AS artifacts
 
 COPY --from=building /usr/lib64/onnxruntime.so onnxruntime.so
 COPY --from=building /usr/lib/libtokenizers.a libtokenizers.a
